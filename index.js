@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const bookCollections = client.db("Book-Shelves").collection("books");
 
@@ -33,6 +33,11 @@ async function run() {
     app.get('/books', async(req,res)=>{
         const cursor=await bookCollections.find().toArray()
         res.send(cursor)
+    })
+    app.post('/books',async(req,res)=>{
+      const book=req.body;
+      const result=await bookCollections.insertOne(book)
+      res.send(result)
     })
 
     app.get('/books/:category', async(req,res)=>{
