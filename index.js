@@ -1,16 +1,22 @@
 const express = require('express');
-const app=express()
+const app = express()
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const cors = require('cors');
-const port=process.env.PORT || 5000
+const port = process.env.PORT || 5000
 
 
 // middleware
-app.use(cors())
+const corsConfig = {
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+}
+app.use(cors(corsConfig))
 app.use(express.json())
 
 
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.je93mhd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -25,33 +31,52 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     const bookCollections = client.db("Book-Shelves").collection("books");
 
 
-    app.get('/books', async(req,res)=>{
-        const cursor=await bookCollections.find().toArray()
-        res.send(cursor)
+    app.get('/books', async (req, res) => {
+      const cursor = await bookCollections.find().toArray()
+      res.send(cursor)
     })
-    app.post('/books',async(req,res)=>{
-      const book=req.body;
-      const result=await bookCollections.insertOne(book)
+    app.post('/books', async (req, res) => {
+      const book = req.body;
+      const result = await bookCollections.insertOne(book)
       res.send(result)
     })
 
-    app.get('/books/:category', async(req,res)=>{
-        const query=req.params.category;
-        const category={category: query};
-        const result=await bookCollections.find(category).toArray()
-        res.send(result)
+    app.get('/books/:id', async (req, res) => {
+      const id = req.params.id;
+      const book = { _id: new ObjectId(id) };
+      const result = await bookCollections.findOne(book)
+      res.send(result)
     })
-    app.get('/books/:id', async(req,res)=>{
-        const id=req.params.id;
-        const book={_id: new ObjectId(id)};
-        const result=await bookCollections.findOne(book)
-        res.send(result)
+    app.patch('/books/:id', async (req, res) => {
+      const id = req.params.id;
+      const book = { _id: new ObjectId(id) };
+      const existingBook=req.body;
+      const updatedBook={
+        $set:{
+          name:existingBook.name,
+          image:existingBook.image,
+          authorName:existingBook.authorName,
+          ratings:existingBook.ratings,
+          category:existingBook.category,
+          quantity:existingBook.quantity,
+          
+        }
+      }
+      const result = await bookCollections.updateOne(book,updatedBook)
+      res.send(result)
     })
+    app.get('/books/:category', async (req, res) => {
+      const query = req.params.category;
+      const category = { category: query };
+      const result = await bookCollections.find(category).toArray()
+      res.send(result)
+    })
+
 
 
 
@@ -66,10 +91,10 @@ async function run() {
 run().catch(console.dir);
 
 
-app.get('/',(req,res)=>{
-    res.send('Book Shelves is opening Soon')
+app.get('/', (req, res) => {
+  res.send('Book Shelves is opening Soon')
 })
 
-app.listen(port,()=>{
-    console.log(`Book Shelves is running on port ${port}`)
+app.listen(port, () => {
+  console.log(`Book Shelves is running on port ${port}`)
 })
