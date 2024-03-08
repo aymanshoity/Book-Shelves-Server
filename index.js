@@ -34,6 +34,7 @@ async function run() {
     await client.connect();
 
     const bookCollections = client.db("Book-Shelves").collection("books");
+    const borrowedBooksCollections = client.db("Book-Shelves").collection("borrowedBooks");
 
 
     app.get('/books', async (req, res) => {
@@ -48,34 +49,70 @@ async function run() {
 
     app.get('/books/:id', async (req, res) => {
       const id = req.params.id;
-      const book = { _id: new ObjectId(id) };
+      const book = {_id: new ObjectId(id)};
       const result = await bookCollections.findOne(book)
+      res.send(result)
+    })
+    app.get('/books/category/:category',async(req,res)=>{
+      const category=req.params.category;
+      const query= {category: category}
+      const result= await bookCollections.find(query).toArray()
       res.send(result)
     })
     app.patch('/books/:id', async (req, res) => {
       const id = req.params.id;
       const book = { _id: new ObjectId(id) };
-      const existingBook=req.body;
-      const updatedBook={
-        $set:{
-          name:existingBook.name,
-          image:existingBook.image,
-          authorName:existingBook.authorName,
-          ratings:existingBook.ratings,
-          category:existingBook.category,
-          quantity:existingBook.quantity,
-          
+      const existingBook = req.body;
+      const updatedBook = {
+        $set: {
+          quantity: existingBook.quantity,
         }
       }
-      const result = await bookCollections.updateOne(book,updatedBook)
+      const result = await bookCollections.updateOne(book, updatedBook)
       res.send(result)
     })
-    app.get('/books/:category', async (req, res) => {
-      const query = req.params.category;
-      const category = { category: query };
-      const result = await bookCollections.find(category).toArray()
+    app.patch('/books/:id', async (req, res) => {
+      const id = req.params.id;
+      const book = { _id: new ObjectId(id) };
+      const existingBook = req.body;
+      const updatedBook = {
+        $set: {
+          name: existingBook.name,
+          image: existingBook.image,
+          authorName: existingBook.authorName,
+          ratings: existingBook.ratings,
+          category: existingBook.category,
+          quantity: existingBook.quantity,
+
+        }
+      }
+      const result = await bookCollections.updateOne(book, updatedBook)
       res.send(result)
     })
+    app.post('/borrowedBooks',async(req,res)=>{
+      const borrowedBooks=req.body;
+      const result=await borrowedBooksCollections.insertOne(borrowedBooks)
+      res.send(result)
+    })
+    app.get('/borrowedBooks', async(req,res)=>{
+      const result=await borrowedBooksCollections.find().toArray()
+      res.send(result)
+    })
+    app.patch('/books/:id', async (req, res) => {
+      const id = req.params.id;
+      const book = { _id: new ObjectId(id) };
+      const existingBook = req.body;
+      const updatedBook = {
+        $set: {
+          quantity: existingBook.quantity,
+        }
+      }
+      const result = await bookCollections.updateOne(book, updatedBook)
+      res.send(result)
+    })
+
+    
+
 
 
 
