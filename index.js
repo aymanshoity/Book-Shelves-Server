@@ -41,12 +41,12 @@ async function run() {
 
 
     // middlewares
-    const verifyToken = (req, res, next) => {
-      console.log('inside Verify Token', req.headers.authorization)
-      if (!req.headers.authorization) {
+    const verifyToken =async(req, res, next) => {
+      console.log('inside Verify Token', req.headers?.authorization)
+      if (!req.headers?.authorization) {
         return res.status(401).send({ message: 'Unauthorized Access' })
       }
-      const token = req.headers.authorization.split(' ')[1]
+      const token = req.headers?.authorization?.split(' ')[1]
       jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (error, decoded) => {
         if (error) {
           return res.status(401).send({ message: 'Unauthorized Access' })
@@ -89,7 +89,7 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/readers/librarian/:email', verifyToken, async (req, res) => {
+    app.get('/readers/librarian/:email', verifyToken, async(req, res) => {
       const email = req.params.email;
       if ( email !== req.decoded.email) {
         return res.status(403).send({ message: 'Forbidden Access' })
@@ -146,7 +146,7 @@ async function run() {
       const result = await bookCollections.findOne(book)
       res.send(result)
     })
-    app.get('/books/category/:category', async (req, res) => {
+    app.get('/books/category/:category',verifyToken, async (req, res) => {
       const category = req.params.category;
       const query = { category: category }
       const result = await bookCollections.find(query).toArray()
@@ -182,23 +182,23 @@ async function run() {
       const result = await bookCollections.updateOne(book, updatedBook)
       res.send(result)
     })
-    app.post('/borrowedBooks', async (req, res) => {
+    app.post('/borrowedBooks',verifyToken, async(req, res) => {
       const borrowedBooks = req.body;
       const result = await borrowedBooksCollections.insertOne(borrowedBooks)
       res.send(result)
     })
-    app.get('/borrowedBooks', async (req, res) => {
+    app.get('/borrowedBooks',verifyToken,async(req, res) => {
       const result = await borrowedBooksCollections.find().toArray()
       res.send(result)
     })
-    app.get('/borrowedBooks/:email', async (req, res) => {
+    app.get('/borrowedBooks/:email',verifyToken, async (req, res) => {
       const email = req.params.email;
       const query = { readerEmail: email };
       const result = await borrowedBooksCollections.find(query).toArray()
       res.send(result)
 
     })
-    app.delete('/borrowedBooks/:id', async (req, res) => {
+    app.delete('/borrowedBooks/:id', verifyToken,async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
       const result = await borrowedBooksCollections.deleteOne(query)
